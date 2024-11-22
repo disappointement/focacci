@@ -1,0 +1,71 @@
+@prefix = http://localhost:19047api/
+@token
+
+# Create a user
+POST {{prefix}}/user
+Content-Type: application/json
+
+{
+    "username": "pontes"
+}
+
+> {% @{{token}} = response.body.token %}
+
+###
+
+# Save the token to a variable
+@token = {{token}}
+
+### List/Search groups
+
+GET {{prefix}}/groups
+Authorization: Bearer {{token}}
+
+### Get group details
+GET {{prefix}}/groups/2
+Authorization: Bearer {{token}}
+
+### Delete group
+DELETE {{prefix}}/groups/1
+Authorization: Bearer {{token}}
+
+### Update group
+PUT {{prefix}}/groups/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "Updated Group Name",
+    "description": "Updated Group Description"
+}
+
+### Create group
+POST {{prefix}}/groups
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "New Group",
+    "description": "New Group Description"
+}
+
+### Add team to group
+POST {{prefix}}/groups/2/teams
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "teamId": 123,
+    "leagueId": 456,
+    "season": 2021
+}
+
+### Remove team from group
+DELETE {{prefix}}/groups/2/teams/123
+Authorization: Bearer {{token}}
+
+### Non registered route
+GET {{prefix}}/nonexistent
+Authorization: Bearer {{token}}
+
+
