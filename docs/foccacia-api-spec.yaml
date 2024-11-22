@@ -18,11 +18,7 @@ tags:
   - name: Teams
   - name: Users
 paths:
-<<<<<<< HEAD
   /api/teams:
-=======
-  /api/teams: #api/teams?name={name}
->>>>>>> 45e1e946962a171c07cc845a5479cf025863fb43
     description: Resource used for getting teams by name
     get:
       tags:
@@ -49,11 +45,7 @@ paths:
           description: Invalid name supplied
         '404':
           description: Team not found
-<<<<<<< HEAD
   /api/leagues:
-=======
-  /api/leagues: #/api/leagues?team={id}
->>>>>>> 45e1e946962a171c07cc845a5479cf025863fb43
     description: Resource used for getting leagues by team
     get:
       tags:
