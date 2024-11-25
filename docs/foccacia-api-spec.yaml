@@ -4,7 +4,7 @@ info:
   description: An API for managing and acessing football teams and grouping them.
   version: 1.0.0
   contact:
-    email: a51642@alunos.isel.pt 
+    email: a51642@alunos.isel.pt
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -46,7 +46,7 @@ paths:
         '404':
           description: Team not found
   /api/leagues:
-    description: Resource used for getting leagues by team
+    description: Resource used for getting leagues by team id
     get:
       tags:
         - Leagues
@@ -60,7 +60,6 @@ paths:
           required: true
           schema:
             type: integer
-            minimum: 1
             example: 1
       responses:
         '200':
@@ -68,11 +67,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/League'
+                type: array
+                items:
+                  $ref: '#/components/schemas/League'
         '400':
           description: Invalid team id supplied
         '404':
           description: League not found
+  /api/users:
+    post:
+      tags:
+        - Users
+      summary: Create User
+      description: Create a new user
+      operationId: createUser
+      requestBody:
+        description: User to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewUserCreated'
+        '400':
+          description: Invalid input
   /api/groups:
     get:
       tags:
@@ -118,8 +142,60 @@ paths:
                 $ref: '#/components/schemas/NewGroupCreated'
         '400':
           description: Invalid input
-          
     put:
+      tags:
+        - Groups
+      summary: Update Group
+      description: Update a Group's description and/or name
+      operationId: updateGroup
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: query
+          description: Id of the group
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        description: Group to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatedGroup'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '404':
+          description: Group not found
+    delete:
+      tags:
+        - Groups
+      summary: Delete Group
+      description: Delete a Group of teams
+      operationId: deleteGroup
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: groupId
+          in: query
+          description: Id of the group
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Group deleted
+        '400':
+          description: Invalid input
+        '404':
+          description: Group not found
+    head:
       tags:
         - Groups
       summary: Add Team to Group
@@ -150,95 +226,94 @@ paths:
         '404':
           description: Group not found
   /api/groups/{groupId}:
-    delete:
-      tags:
-      - Groups
-      summary: Delete Group by id
-      description: Delete a Group
-      operationId: deleteGroup
-      parameters:
+    parameters:
       - name: groupId
         in: path
         description: Id of the group
         required: true
         schema:
           type: integer
+          example: 1
+    get:
+      tags:
+        - Groups
+      summary: Get Group
+      description: Get a Group and it's Teams by the group's id
+      operationId: getGroup
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Group deleted
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Group'
+                  - type: object
+                    properties:
+                      teams:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GroupTeam'
         '400':
           description: Invalid input
         '404':
           description: Group not found
+    post:
+      tags:
+        - Groups
+      summary: Add Team to Group
+      description: Add a Team to a Group of teams
+      operationId: addTeamToGroup
+      requestBody:
+        description: Team to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGroupTeam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewGroupTeamCreated'
+        '400':
+          description: Invalid input
+        '404':
+          description: Group not found
+        '409':
+          description: Team already in group
+    delete:
+      tags:
+        - Groups
+      summary: Remove Team from Group
+      description: Remove a Team from a Group of teams
+      operationId: removeTeamFromGroup
+      parameters:
+        - name: teamId
+          in: query
+          description: Id of the team
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '404':
+          description: Group or team not found
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
-    NewUser:
-      type: object
-      required:
-        - username
-      properties:
-        username:
-          type: string
-          example: 'goncalo.pontes'
-    NewUserCreated:
-      type: object
-      required:
-        - token
-      properties:
-        token:
-          type: string
-          format: uuid
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        username:
-          type: string
-          example: 'goncalo.pontes'
-    League:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: 'Primeira Liga'
-        type:
-          type: string
-          enum:
-            - 'League'
-            - 'Cup'
-        logo:
-          type: string
-          example: 'https://media.api-sports.io/football/leagues/1.png'
-    Venue:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 556
-        name:
-          type: string
-          example: 'Old Trafford'
-        city:
-          type: string
-          example: 'Manchester'
-        capacity:
-          type: integer
-          example: 76212
-        surface:
-          type: string
-          example: 'grass'
-        image:
-          type: string
-          example: 'https://media.api-sports.io/football/venues/556.png'
     Team:
       type: object
       properties:
@@ -265,6 +340,48 @@ components:
         logo:
           type: string
           example: 'https://upload.wikimedia.org/wikipedia/pt/thumb/3/3e/Sporting_Clube_de_Portugal.png/180px-Sporting_Clube_de_Portugal.png'
+    League:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Primeira Liga'
+        type:
+          type: string
+          enum:
+            - 'League'
+            - 'Cup'
+        logo:
+          type: string
+          example: 'https://media.api-sports.io/football/leagues/1.png'
+    NewUser:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          example: 'goncalo.pontes'
+    NewUserCreated:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          format: uuid
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: 'goncalo.pontes'
     NewGroup:
       type: object
       required:
@@ -273,10 +390,20 @@ components:
       properties:
         name:
           type: string
-          example: 'Group A'
+          example: 'Tugas'
         description:
           type: string
-          example: 'Group A of the Champions League'
+          example: 'Group of portuguese teams'
+    UpdatedGroup:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          example: 'Zucas'
+        description:
+          type: string
+          example: 'Group of brazilian teams'
     NewGroupCreated:
       type: object
       required:
@@ -291,15 +418,37 @@ components:
           example: 1
     Group:
       allOf:
-        - type: object
         - $ref: '#/components/schemas/NewGroup'
-          required:
-            - id
-            - ownerId
-          properties:
-            id:
-              type: integer
-              example: 1
-            ownerId:
-              type: integer
-              example: 1
+        - $ref: '#/components/schemas/NewGroupCreated'
+    NewGroupTeam:
+      type: object
+      required:
+        - teamId
+      properties:
+        teamId:
+          type: integer
+          example: 1
+        leagueId:
+          type: integer
+          example: 1
+        season:
+          type: integer
+          maximum: 9999
+          minimum: 0000
+          example: 2020
+    NewGroupTeamCreated:
+      type: object
+      required:
+        - id
+        - groupId
+      properties:
+        id:
+          type: integer
+          example: 1
+        groupId:
+          type: integer
+          example: 1
+    GroupTeam:
+      allOf:
+        - $ref: '#/components/schemas/NewGroupTeam'
+        - $ref: '#/components/schemas/NewGroupTeamCreated'
