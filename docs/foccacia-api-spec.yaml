@@ -452,3 +452,4 @@ components:
       allOf:
         - $ref: '#/components/schemas/NewGroupTeam'
         - $ref: '#/components/schemas/NewGroupTeamCreated'
+        
