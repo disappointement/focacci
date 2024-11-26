@@ -49,6 +49,6 @@ export default function (app) {
   app.delete(RESOURCES.GROUPS, api.deleteGroup);
 
   app.get(RESOURCES.GROUP, api.getGroupDetails);
-  app.put(RESOURCES.GROUP, api.addTeamToGroup);
+  app.post(RESOURCES.GROUP, api.addTeamToGroup);
   app.delete(RESOURCES.GROUP, api.removeTeamFromGroup);
 }

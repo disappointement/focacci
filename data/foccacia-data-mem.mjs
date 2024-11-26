@@ -1,4 +1,5 @@
 import errors from '../src/errors.mjs';
+import * as fapiData from '../data/fapi-teams-data.mjs';
 import crypto from 'crypto';
 
 let idNextUser = 0;
@@ -59,13 +60,13 @@ export function getGroups(userId) {
 export function getGroup(groupId) {
   const group = GROUPS.find((g) => g.id === groupId);
 
-  if (!group) {
+  if (group == undefined) {
     return Promise.reject(
       errors.NOT_FOUND(`Group with id ${groupId} not found`)
     );
   }
 
-  return Promise.resolve();
+  return Promise.resolve(group);
 }
 
 export function createGroup(name, description, userId) {
@@ -85,6 +86,96 @@ export function updateGroup(groupId, name, description) {
   if (description) group.description = description;
 
   return Promise.resolve(group);
+}
+
+export function deleteGroup(groupId) {
+  const index = GROUPS.findIndex((g) => g.id === groupId);
+  if (index === -1) {
+    return Promise.reject(
+      errors.NOT_FOUND(`Group with id ${groupId} not found`)
+    );
+  }
+  GROUPS.splice(index, 1);
+  return Promise.resolve();
+}
+
+export function getGroupDetails(groupId, userId) {
+  return getGroup(groupId).then((group) => {
+    if (group.ownerId !== userId) {
+      return Promise.reject(
+        errors.NOT_AUTHORIZED(
+          `User with id ${userId} does not own group with id ${groupId}`
+        )
+      );
+    }
+
+    const teams = GROUP_TEAMS.filter((gt) => gt.groupId === groupId).map(
+      (gt) => {
+        return fapiData
+          .getTeams({
+            id: gt.teamId,
+            league: gt.leagueId,
+            season: gt.season,
+          })
+          .then(({ team: { name: teamName }, venue: { name: venueName } }) => {
+            return fapiData
+              .getLeagues(gt.leagueId)
+              .then(({ league: { name: leagueName } }) => {
+                return {
+                  team: teamName,
+                  venue: venueName,
+                  league: leagueName,
+                  season: gt.season,
+                };
+              });
+          });
+      }
+    );
+
+    return Promise.all(teams).then((teams) => {
+      return {
+        ...group,
+        teams,
+      };
+    });
+  });
+}
+
+export function addTeamToGroup(groupId, teamId, leagueId, season) {
+  const group = GROUPS.find((g) => g.id === groupId);
+  if (!group) {
+    return Promise.reject(
+      errors.NOT_FOUND(`Group with id ${groupId} not found`)
+    );
+  }
+
+  return fapiData
+    .getTeams({
+      id: teamId,
+      league: leagueId,
+      season: season,
+    })
+    .then(() => {
+      const team = GROUP_TEAMS.find(
+        (gt) =>
+          gt.groupId === groupId &&
+          gt.teamId === teamId &&
+          gt.leagueId === leagueId &&
+          gt.season === season
+      );
+
+      if (team) {
+        return Promise.reject(
+          errors.CONFLICT(
+            `Team with id ${teamId}, league id ${leagueId} and season ${season} already exists in group with id ${groupId}`
+          )
+        );
+      }
+
+      const groupTeam = new GroupTeam(groupId, teamId, leagueId, season);
+      GROUP_TEAMS.push(groupTeam);
+      return Promise.resolve(groupTeam);
+    });
 }
 
 export function convertTokenToId(userToken) {

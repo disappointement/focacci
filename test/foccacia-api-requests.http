@@ -34,9 +34,12 @@ Content-Type: application/json
     "description": "Group for Benfica fans"
 }
 
-### Update an invalid group
-PUT {{prefix}}/groups
-Authorization: Bearer {{baseToken}}
+### Update a group
+
+@groupId = {{groupAPI.response.body.id}}
+
+PUT {{prefix}}/groups?groupId={{groupId}}
+Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
@@ -44,15 +47,33 @@ Content-Type: application/json
     "description": "Group for Sporting fans"
 }
 
-### Update a group
+### Delete a group
 
-@groupId = {{groupAPI.response.body.id}}
+DELETE {{prefix}}/groups?groupId={{groupId}}
+Authorization: Bearer {{authToken}}
 
-PUT {{prefix}}/groups?groupId{{groupId}}
+### Get all groups
+
+GET {{prefix}}/groups
+Authorization: Bearer {{authToken}}
+
+### Get group info by id
+
+GET {{prefix}}/groups/{{groupId}}
+Authorization: Bearer {{authToken}}
+
+### Add team to group
+
+@teamId = 211
+@leagueId = 94
+@season = 2024
+
+POST {{prefix}}/groups/{{groupId}}
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "name": "Sporting Fans",
-    "description": "Group for Sporting fans"
+    "teamId": {{teamId}},
+    "leagueId": {{leagueId}},
+    "season": {{season}}
 }

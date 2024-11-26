@@ -42,7 +42,12 @@ function internalCreateGroup(req, rsp) {
 
 function internalUpdateGroup(req, rsp) {
   return foccaciaServices
-    .updateGroup(req.params.id, req.body.name, req.body.description, req.token)
+    .updateGroup(
+      req.query['groupId'],
+      req.body.name,
+      req.body.description,
+      req.token
+    )
     .then((group) => rsp.json(group));
 }
 
@@ -54,13 +59,13 @@ function internalGetGroups(req, rsp) {
 
 function internalDeleteGroup(req, rsp) {
   return foccaciaServices
-    .deleteGroup(req.params.id, req.token)
+    .deleteGroup(req.query['groupId'], req.token)
     .then(() => rsp.status(204).send());
 }
 
 function internalGetGroupDetails(req, rsp) {
   return foccaciaServices
-    .getGroupDetails(req.params.id, req.token)
+    .getGroupDetails(req.params.groupId, req.token)
     .then((group) => rsp.json(group));
 }
 
@@ -79,7 +84,7 @@ function internalAddTeamToGroup(req, rsp) {
 
 function internalRemoveTeamFromGroup(req, rsp) {
   return foccaciaServices
-    .removeTeamFromGroup(req.params.id, req.params.teamId, req.token)
+    .removeTeamFromGroup(req.params.groupId, req.params.teamId, req.token)
     .then(() => rsp.status(204).send());
 }
 
