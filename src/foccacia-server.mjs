@@ -1,22 +1,33 @@
-/**
- * Starts HTTP server
- */
-
-import swaggerUI from 'swagger-ui-express';
 import express from 'express';
-import YAML from 'yamljs';
-import cors from 'cors';
-import foccaciaWebApi from './foccacia-web-api.mjs';
+import fs from 'fs';
+
+const argv = process.argv.slice(2);
+
+if (argv.length !== 1) {
+  console.log('Usage: node src/foccacia-server.mjs <config-file>');
+  process.exit(1);
+}
+
+const configFile = argv[0];
+if (!fs.existsSync(configFile)) {
+  console.log(`Config file not found: ${configFile}`);
+  process.exit(1);
+}
+
+const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+if (!config.apiKey) {
+  console.log('Config file must have an apiKey property');
+  process.exit(1);
+}
+
+process.env.apiKey = config.apiKey;
 
 const app = express();
-const swaggerDocument = YAML.load('./docs/foccacia-api-spec.yaml');
 
-app.use(cors());
-app.use(express.json()); // Middleware to handle JSON body
-app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument));
-app.use('/api', foccaciaWebApi); // Use the routes defined in foccacia-web-api.mjs
+import init from './foccacia-server-config.mjs';
+init(app);
 
-const PORT = 1904;
+const PORT = 2024;
 app.listen(PORT, serverStarted);
 
 function serverStarted(e) {

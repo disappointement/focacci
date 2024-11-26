@@ -195,36 +195,6 @@ paths:
           description: Invalid input
         '404':
           description: Group not found
-    head:
-      tags:
-        - Groups
-      summary: Add Team to Group
-      description: Add a Team to a Group
-      operationId: addTeamToGroup
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: groupId
-          in: query
-          description: Id of the group
-          required: true
-          schema:
-            type: integer
-            example: 1
-        - name: teamId
-          in: query
-          description: Id of the team
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Successful operation
-        '400':
-          description: Invalid input
-        '404':
-          description: Group not found
   /api/groups/{groupId}:
     parameters:
       - name: groupId
@@ -239,7 +209,7 @@ paths:
         - Groups
       summary: Get Group
       description: Get a Group and it's Teams by the group's id
-      operationId: getGroup
+      operationId: getGroupDetails
       security:
         - bearerAuth: []
       responses:

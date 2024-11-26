@@ -1,4 +1,4 @@
-import { ERROR_CODES } from '../errors.mjs';
+import { ERROR_CODES } from './errors.mjs';
 
 function HttpError(status, obj) {
   this.status = status;
@@ -9,6 +9,7 @@ const ERROR_MAPPING = {
   [ERROR_CODES.InvalidData]: 400,
   [ERROR_CODES.NotFound]: 404,
   [ERROR_CODES.NotAuthorized]: 403,
+  [ERROR_CODES.Conflict]: 409,
 };
 
 const INTERNAL_ERROR = new HttpError(500, {

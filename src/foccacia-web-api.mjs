@@ -1,104 +1,85 @@
-/**
- * This file contains all HTTP API handling functions.
- */
-/**
- * This file contains all HTTP API handling functions.
- */
-
 import * as foccaciaServices from './foccacia-services.mjs';
 import errorsMapping from './application-to-http-errors.mjs';
-import errors from '../errors.mjs';
 
-export const searchTeamsByName = createHandler(internalSearchTeamsByName);
-export const searchLeaguesByTeam = createHandler(internalSearchLeaguesByTeam);
+export const getTeamsByName = createHandler(internalGetTeamsByName);
+export const getLeaguesByTeam = createHandler(internalGetLeaguesByTeam);
 export const createGroup = createHandler(internalCreateGroup);
 export const updateGroup = createHandler(internalUpdateGroup);
-export const listGroups = createHandler(internalListGroups);
+export const getGroups = createHandler(internalGetGroups);
 export const deleteGroup = createHandler(internalDeleteGroup);
 export const getGroupDetails = createHandler(internalGetGroupDetails);
 export const addTeamToGroup = createHandler(internalAddTeamToGroup);
 export const removeTeamFromGroup = createHandler(internalRemoveTeamFromGroup);
 export const createUser = createHandler(internalCreateUser);
 
-
-// foccacia-web-api.mjs
-
 export function extractToken(req, res, next) {
   const token = req.headers['authorization'];
   if (token) {
-    req.token = token;
+    req.token = token.split(' ')[1];
     next();
   } else {
     res.status(401).send('Token not provided');
   }
 }
 
-function internalSearchTeamsByName(req, rsp) {
+function internalGetTeamsByName(req, rsp) {
   return foccaciaServices
-    .searchTeamsByName(req.query.name, req.headers['x-apisports-key'])
+    .getTeamsByName(req.query.name)
     .then((teams) => rsp.json(teams));
 }
 
-function internalSearchLeaguesByTeam(req, rsp) {
+function internalGetLeaguesByTeam(req, rsp) {
   return foccaciaServices
-    .searchLeaguesByTeam(req.query.team, req.headers['x-apisports-key'])
+    .getLeaguesByTeam(req.query.team)
     .then((leagues) => rsp.json(leagues));
 }
 
 function internalCreateGroup(req, rsp) {
   return foccaciaServices
-    .createGroup(req.body.name, req.body.description, req.headers.authorization)
+    .createGroup(req.body.name, req.body.description, req.token)
     .then((group) => rsp.status(201).json(group));
 }
 
 function internalUpdateGroup(req, rsp) {
   return foccaciaServices
-    .updateGroup(
-      req.params.id,
-      req.body.name,
-      req.body.description,
-      req.headers.authorization
-    )
+    .updateGroup(req.params.id, req.body.name, req.body.description, req.token)
     .then((group) => rsp.json(group));
 }
 
-function internalListGroups(req, rsp) {
+function internalGetGroups(req, rsp) {
   return foccaciaServices
-    .listGroups(req.headers.authorization)
+    .getGroups(req.token)
     .then((groups) => rsp.json(groups));
 }
 
 function internalDeleteGroup(req, rsp) {
   return foccaciaServices
-    .deleteGroup(req.params.id, req.headers.authorization)
+    .deleteGroup(req.params.id, req.token)
     .then(() => rsp.status(204).send());
 }
 
 function internalGetGroupDetails(req, rsp) {
   return foccaciaServices
-    .getGroupDetails(req.params.id, req.headers.authorization)
+    .getGroupDetails(req.params.id, req.token)
     .then((group) => rsp.json(group));
 }
 
 function internalAddTeamToGroup(req, rsp) {
+  console.log(req.params);
   return foccaciaServices
     .addTeamToGroup(
-      req.params.id,
+      req.params.groupId,
       req.body.teamId,
       req.body.leagueId,
       req.body.season,
-      req.headers.authorization
+      req.token
     )
     .then((team) => rsp.status(201).json(team));
 }
 
 function internalRemoveTeamFromGroup(req, rsp) {
   return foccaciaServices
-    .removeTeamFromGroup(
-      req.params.id,
-      req.params.teamId,
-      req.headers.authorization
-    )
+    .removeTeamFromGroup(req.params.id, req.params.teamId, req.token)
     .then(() => rsp.status(204).send());
 }
 
@@ -108,14 +89,16 @@ function internalCreateUser(req, rsp) {
     .then((user) => rsp.status(201).json(user));
 }
 
-function createHandler(internalFunction) {
-  return async (req, rsp) => {
-    try {
-      await internalFunction(req, rsp);
-    } catch (error) {
-      const mappedError =
-        errorsMapping[error.message] || errors.INTERNAL_SERVER_ERROR;
-      rsp.status(mappedError.status).json({ error: mappedError.message });
-    }
+function createHandler(specificFunction) {
+  return function (req, rsp, next) {
+    const promiseResult = specificFunction(req, rsp);
+
+    promiseResult.catch((error) => sendError(rsp, error));
   };
+}
+
+function sendError(rsp, appError) {
+  console.error(appError);
+  const httpError = errorsMapping(appError);
+  rsp.status(httpError.status).json(httpError.body);
 }

@@ -21,21 +21,34 @@ function showRequestData(req, res, next) {
 
 export default function (app) {
   app.use(express.json());
-  app.use(countReq);
-  app.use(showRequestData);
-  app.use(api.extractToken);
+  app.use(countReq, showRequestData);
 
   // Web Application Resources URIs
   const RESOURCES = {
+    TEAMS: '/api/teams',
+    LEAGUES: '/api/leagues',
+    USERS: '/api/users',
     GROUPS: '/api/groups',
     GROUP: '/api/groups/:groupId',
   };
 
+  // Middleware to extract token from request
+  app.use(RESOURCES.GROUP, api.extractToken);
+  app.use(RESOURCES.GROUPS, api.extractToken);
+
   // Web Application Routes
-  app.get(RESOURCES.GROUPS, api.listGroups);
-  app.post(RESOURCES.GROUPS, api.createUser);
+  app.get(RESOURCES.TEAMS, api.getTeamsByName);
+
+  app.get(RESOURCES.LEAGUES, api.getLeaguesByTeam);
+
+  app.post(RESOURCES.USERS, api.createUser);
+
+  app.get(RESOURCES.GROUPS, api.getGroups);
+  app.post(RESOURCES.GROUPS, api.createGroup);
+  app.put(RESOURCES.GROUPS, api.updateGroup);
+  app.delete(RESOURCES.GROUPS, api.deleteGroup);
 
   app.get(RESOURCES.GROUP, api.getGroupDetails);
   app.put(RESOURCES.GROUP, api.addTeamToGroup);
-  app.delete(RESOURCES.GROUP, api.deleteGroup);
+  app.delete(RESOURCES.GROUP, api.removeTeamFromGroup);
 }
