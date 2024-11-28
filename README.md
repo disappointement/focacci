@@ -85,5 +85,3 @@ In order to get one you must first create a user with the **POST /api/users/** e
    node src/foccacia-server.mjs <config-file>
    ```
    Replace `<config-file>` with the path to your configuration file.
-
-The server will start on port 2024. You can access the API endpoints using a tool like Postman or curl.
