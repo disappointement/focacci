@@ -70,7 +70,6 @@ function internalGetGroupDetails(req, rsp) {
 }
 
 function internalAddTeamToGroup(req, rsp) {
-  console.log(req.params);
   return foccaciaServices
     .addTeamToGroup(
       req.params.groupId,
@@ -84,7 +83,13 @@ function internalAddTeamToGroup(req, rsp) {
 
 function internalRemoveTeamFromGroup(req, rsp) {
   return foccaciaServices
-    .removeTeamFromGroup(req.params.groupId, req.params.teamId, req.token)
+    .removeTeamFromGroup(
+      req.params.groupId,
+      req.query['teamId'],
+      req.query['leagueId'],
+      req.query['season'],
+      req.token
+    )
     .then(() => rsp.status(204).send());
 }
 

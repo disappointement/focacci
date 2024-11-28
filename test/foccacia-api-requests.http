@@ -66,7 +66,7 @@ Authorization: Bearer {{authToken}}
 
 @teamId = 211
 @leagueId = 94
-@season = 2024
+@season = 2022
 
 POST {{prefix}}/groups/{{groupId}}
 Authorization: Bearer {{authToken}}
@@ -77,3 +77,8 @@ Content-Type: application/json
     "leagueId": {{leagueId}},
     "season": {{season}}
 }
+
+### Remove team from group
+
+DELETE {{prefix}}/groups/{{groupId}}?teamId={{teamId}}&leagueId={{leagueId}}&season={{season}}
+Authorization: Bearer {{authToken}}

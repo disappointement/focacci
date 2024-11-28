@@ -41,6 +41,22 @@ function parseGroupId(groupId) {
   return Promise.resolve(parseInt(groupId));
 }
 
+function parseParams(params) {
+  for (const key in params) {
+    if (params[key] === undefined) {
+      return Promise.reject(errors.INVALID_DATA(`${key} must be provided`));
+    }
+
+    if (isNaN(params[key])) {
+      return Promise.reject(errors.INVALID_DATA(`${key} must be a number`));
+    }
+
+    params[key] = parseInt(params[key]);
+  }
+
+  return Promise.resolve(params);
+}
+
 function getTeamsByNameInternal(teamName) {
   return fapiData.getTeams({
     name: teamName,
@@ -112,7 +128,7 @@ function deleteGroupInternal(groupId, userId) {
 function getGroupDetailsInternal(groupId, userId) {
   return parseGroupId(groupId).then((groupId) => {
     return apiData.getGroup(groupId).then((group) => {
-      if (group.ownerId === userId) return group;
+      if (group.ownerId === userId) return apiData.getGroupDetails(groupId);
       return Promise.reject(
         errors.NOT_AUTHORIZED(
           `User with id ${userId} does not own group with id ${groupId}`
@@ -123,31 +139,56 @@ function getGroupDetailsInternal(groupId, userId) {
 }
 
 function addTeamToGroupInternal(groupId, teamId, leagueId, season, userId) {
-  return parseGroupId(groupId).then((groupId) => {
-    return apiData.getGroup(groupId).then((group) => {
-      if (group.ownerId === userId) {
-        return apiData.addTeamToGroup(groupId, teamId, leagueId, season);
-      }
-      return Promise.reject(
-        errors.NOT_AUTHORIZED(
-          `User with id ${userId} does not own group with id ${groupId}`
-        )
-      );
-    });
-  });
+  return parseParams({ teamId, leagueId, season }).then(
+    ({ teamId, leagueId, season }) => {
+      return parseGroupId(groupId).then((groupId) => {
+        return apiData.getGroup(groupId).then((group) => {
+          if (group.ownerId === userId) {
+            return apiData.addTeamToGroup(groupId, teamId, leagueId, season);
+          }
+          return Promise.reject(
+            errors.NOT_AUTHORIZED(
+              `User with id ${userId} does not own group with id ${groupId}`
+            )
+          );
+        });
+      });
+    }
+  );
 }
 
-function removeTeamFromGroupInternal(groupId, teamId, userId) {
-  return parseGroupId(groupId).then((groupId) => {
-    return apiData.getGroup(groupId).then((group) => {
-      if (group.ownerId === userId) {
-        return apiData.removeTeamFromGroup(groupId, teamId);
-      }
-      return Promise.reject(
-        errors.NOT_AUTHORIZED(
-          `User with id ${userId} does not own group with id ${groupId}`
-        )
-      );
-    });
-  });
+function removeTeamFromGroupInternal(
+  groupId,
+  teamId,
+  leagueId,
+  season,
+  userId
+) {
+  if (!teamId || !leagueId || !season) {
+    return Promise.reject(
+      errors.INVALID_DATA(`teamId, leagueId and season must be provided`)
+    );
+  }
+
+  return parseParams({ teamId, leagueId, season }).then(
+    ({ teamId, leagueId, season }) => {
+      return parseGroupId(groupId).then((groupId) => {
+        return apiData.getGroup(groupId).then((group) => {
+          if (group.ownerId === userId) {
+            return apiData.removeTeamFromGroup(
+              groupId,
+              teamId,
+              leagueId,
+              season
+            );
+          }
+          return Promise.reject(
+            errors.NOT_AUTHORIZED(
+              `User with id ${userId} does not own group with id ${groupId}`
+            )
+          );
+        });
+      });
+    }
+  );
 }

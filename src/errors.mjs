@@ -18,4 +18,6 @@ export default {
 
   NOT_AUTHORIZED: (message) =>
     new ApplicationError(ERROR_CODES.NotAuthorized, message),
+
+  CONFLICT: (message) => new ApplicationError(ERROR_CODES.Conflict, message),
 };

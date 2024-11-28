@@ -84,10 +84,19 @@ function getTeamsInternal(teamSelector) {
   }).then((rsp) => {
     if (rsp.ok) {
       return rsp.json().then((data) => {
-        if (data.response && data.results != 0) {
-          return data.response;
+        if (rsp.status === 204 && data.errors?.bug) {
+          return Promise.reject(errors.INTERNAL_ERROR(data.errors.bug));
         }
-        return Promise.reject(errors.NOT_FOUND(`Team not found`));
+
+        if (data.errors?.plan) {
+          return Promise.reject(errors.NOT_AUTHORIZED(data.errors.plan));
+        }
+
+        if (!data.response || data.results === 0) {
+          return Promise.reject(errors.NOT_FOUND(`Team not found`));
+        }
+
+        return data.response;
       });
     }
 

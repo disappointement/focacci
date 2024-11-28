@@ -99,36 +99,40 @@ export function deleteGroup(groupId) {
   return Promise.resolve();
 }
 
-export function getGroupDetails(groupId, userId) {
+export function getGroupDetails(groupId) {
   return getGroup(groupId).then((group) => {
-    if (group.ownerId !== userId) {
-      return Promise.reject(
-        errors.NOT_AUTHORIZED(
-          `User with id ${userId} does not own group with id ${groupId}`
-        )
-      );
-    }
-
     const teams = GROUP_TEAMS.filter((gt) => gt.groupId === groupId).map(
       (gt) => {
+        console.log(gt);
         return fapiData
           .getTeams({
             id: gt.teamId,
             league: gt.leagueId,
             season: gt.season,
           })
-          .then(({ team: { name: teamName }, venue: { name: venueName } }) => {
-            return fapiData
-              .getLeagues(gt.leagueId)
-              .then(({ league: { name: leagueName } }) => {
-                return {
-                  team: teamName,
-                  venue: venueName,
-                  league: leagueName,
-                  season: gt.season,
-                };
-              });
-          });
+          .then(
+            ([
+              {
+                team: { name: teamName },
+                venue: { name: venueName },
+              },
+            ]) => {
+              return fapiData.getLeagues(gt.leagueId).then(
+                ([
+                  {
+                    league: { name: leagueName },
+                  },
+                ]) => {
+                  return {
+                    team: teamName,
+                    venue: venueName,
+                    league: leagueName,
+                    season: gt.season,
+                  };
+                }
+              );
+            }
+          );
       }
     );
 
@@ -176,6 +180,25 @@ export function addTeamToGroup(groupId, teamId, leagueId, season) {
       GROUP_TEAMS.push(groupTeam);
       return Promise.resolve(groupTeam);
     });
+}
+
+export function removeTeamFromGroup(groupId, teamId, leagueId, season) {
+  const index = GROUP_TEAMS.findIndex(
+    (gt) =>
+      gt.groupId === groupId &&
+      gt.teamId === teamId &&
+      gt.leagueId === leagueId &&
+      gt.season === season
+  );
+  if (index === -1) {
+    return Promise.reject(
+      errors.NOT_FOUND(
+        `Team with id ${teamId}, league id ${leagueId} and season ${season} not found in group with id ${groupId}`
+      )
+    );
+  }
+  GROUP_TEAMS.splice(index, 1);
+  return Promise.resolve();
 }
 
 export function convertTokenToId(userToken) {
